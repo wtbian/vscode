@@ -6,7 +6,7 @@ on:
 jobs:
   build-dmg:
     runs-on: macos-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v6
@@ -22,17 +22,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          # 🚀 关键：跳过二进制下载 + 提供 GitHub Token 解除 API 限流
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build macOS app (Universal)
-        run: npm run gulp vscode-darwin-universal
-        env:
-          # 🚀 关键：跳过不必要的下载，避免 403
-          VSCODE_SKIP_CREDENTIALS: 1
-          VSCODE_SKIP_ASSETS: 1
+      # 🔥 关键修复：使用 VS Code 最新的构建命令
+      - name: Build macOS app
+        run: npm run gulp vscode-darwin-arm64
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -48,7 +44,7 @@ jobs:
             --hide-extension "VS Code OSS.app" \
             --app-drop-link 450 180 \
             "VSCode-OSS.dmg" \
-            ".build/darwin/universal/"
+            ".build/darwin/arm64/"
 
       - name: Upload DMG
         uses: actions/upload-artifact@v7
