@@ -1,0 +1,53 @@
+name: Build macOS DMG
+
+on:
+  workflow_dispatch:    # 允许手动点击运行
+
+jobs:
+  build-dmg:
+    runs-on: macos-latest   # 必须用 macOS
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+      - name: Build macOS app
+        run: yarn gulp vscode-darwin-universal
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Package DMG
+        run: |
+          create-dmg \
+            --volname "VS Code OSS" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "VS Code OSS.app" 150 180 \
+            --hide-extension "VS Code OSS.app" \
+            --app-drop-link 450 180 \
+            "VSCode-OSS.dmg" \
+            ".build/darwin/universal/"
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v7
+        with:
+          name: VSCode-OSS-DMG
+          path: "*.dmg"
