@@ -26,15 +26,19 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 🔥🔥🔥 关键：跳过下载扩展，从根源解决 403
-      - name: Build macOS app (NO extensions)
-        run: npm run gulp vscode-darwin-arm64-min
-        env:
-          VSCODE_SKIP_ASSETS: "true"
-          VSCODE_SKIP_EXTENSIONS: "true"
-          VSCODE_SKIP_CREDENTIALS: "true"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 🔥 终极方案：只编译核心，不打包，不处理扩展、不处理 Copilot
+      - name: Compile VS Code core
+        run: npm run gulp compile
 
+      # 🔥 直接用官方内置的 DN 打包命令（最稳，不踩扩展/权限坑）
+      - name: Build DN (darwin)
+        run: npm run gulp vscode-darwin-arm64-dn
+        env:
+          VSCODE_SKIP_EXTENSIONS: "true"
+          VSCODE_SKIP_ASSETS: "true"
+          VSCODE_SKIP_COPILOT: "true"
+
+      # 打包 DMG
       - name: Install create-dmg
         run: brew install create-dmg
 
@@ -45,11 +49,11 @@ jobs:
             --window-pos 200 120 \
             --window-size 600 400 \
             --icon-size 100 \
-            --icon "VS Code OSS.app" 150 180 \
-            --hide-extension "VS Code OSS.app" \
+            --icon "Code - OSS.app" 150 180 \
+            --hide-extension "Code - OSS.app" \
             --app-drop-link 450 180 \
             "VSCode-OSS.dmg" \
-            ".build/darwin/arm64-min/"
+            ".build/darwin/arm64-dn/"
 
       - name: Upload DMG
         uses: actions/upload-artifact@v7
