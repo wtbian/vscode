@@ -26,19 +26,16 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 🔥 终极方案：只编译核心，不打包，不处理扩展、不处理 Copilot
       - name: Compile VS Code core
         run: npm run gulp compile
 
-      # 🔥 直接用官方内置的 DN 打包命令（最稳，不踩扩展/权限坑）
-      - name: Build DN (darwin)
-        run: npm run gulp vscode-darwin-arm64-dn
+      - name: Build VS Code Darwin ARM64
+        run: node --max-old-space-size=8192 ./node_modules/gulp/bin/gulp.js vscode-darwin-arm64
         env:
           VSCODE_SKIP_EXTENSIONS: "true"
           VSCODE_SKIP_ASSETS: "true"
           VSCODE_SKIP_COPILOT: "true"
 
-      # 打包 DMG
       - name: Install create-dmg
         run: brew install create-dmg
 
@@ -53,7 +50,7 @@ jobs:
             --hide-extension "Code - OSS.app" \
             --app-drop-link 450 180 \
             "VSCode-OSS.dmg" \
-            ".build/darwin/arm64-dn/"
+            ".build/darwin/arm64/"
 
       - name: Upload DMG
         uses: actions/upload-artifact@v7
